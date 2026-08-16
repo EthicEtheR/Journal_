@@ -3,9 +3,10 @@ package com.Aether.Journal.service;
 import com.Aether.Journal.dto.JournalEntryRequestDto;
 import com.Aether.Journal.dto.JournalEntryResponseDto;
 import com.Aether.Journal.entity.JournalEntry;
+import com.Aether.Journal.entity.User;
 import com.Aether.Journal.repository.JournalEntryRepository;
+import com.Aether.Journal.repository.UserRepository;
 import org.bson.types.ObjectId;
-import org.jspecify.annotations.Nullable;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -21,9 +22,14 @@ public class JouralEntryService {
     private JournalEntryRepository journalEntryRepository;
     @Autowired
     private ModelMapper modelMapper;
+    @Autowired
+    private  UserRepository userRepository;
 
     @Transactional
-    public JournalEntryResponseDto createJournalEntry(JournalEntryRequestDto entryRequestDto) {
+    public JournalEntryResponseDto createJournalEntry(JournalEntryRequestDto entryRequestDto,String username) {
+
+        User user=userRepository.findByUsername(username)
+                .orElseThrow();
 
         JournalEntry entry=new JournalEntry();
         entry.setTitle(entryRequestDto.getTitle());
@@ -32,9 +38,13 @@ public class JouralEntryService {
 
         entry=journalEntryRepository.save(entry);
 
+        user.setJournalEntries(List.of(entry));
+        userRepository.save(user);
+
        JournalEntryResponseDto dto=new JournalEntryResponseDto();
        dto.setContent(entry.getContent());
        dto.setDate(entry.getDate());
+       dto.setUsername(username);
        dto.setTitle(entry.getTitle());
        dto.setId(entry.getId());
         return dto;

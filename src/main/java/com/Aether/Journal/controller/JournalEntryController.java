@@ -15,14 +15,15 @@ import java.util.List;
 @RestController
 @RequestMapping("/journal")
 public class JournalEntryController {
+
     @Autowired
     private JouralEntryService jouralEntryService;
 
-    @PostMapping
+    @PostMapping("/{username}")
     public ResponseEntity<JournalEntryResponseDto> createJournal(
-            @RequestBody JournalEntryRequestDto entryRequestDto){
+            @RequestBody JournalEntryRequestDto entryRequestDto,@PathVariable String username){
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(jouralEntryService.createJournalEntry(entryRequestDto));
+                .body(jouralEntryService.createJournalEntry(entryRequestDto,username));
 
 
     }
@@ -39,7 +40,8 @@ public class JournalEntryController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteBYId(@PathVariable ObjectId id){
-        return ResponseEntity.ok(jouralEntryService.deleteById(id));
+        return ResponseEntity.status(HttpStatus.NO_CONTENT)
+                .body(jouralEntryService.deleteById(id));
     }
 
     @PutMapping("/{id}")
