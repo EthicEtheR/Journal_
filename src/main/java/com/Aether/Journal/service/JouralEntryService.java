@@ -4,11 +4,15 @@ import com.Aether.Journal.dto.JournalEntryRequestDto;
 import com.Aether.Journal.dto.JournalEntryResponseDto;
 import com.Aether.Journal.entity.JournalEntry;
 import com.Aether.Journal.entity.User;
+import com.Aether.Journal.exception.GenericNotFoundException;
+import com.Aether.Journal.exception.IllegalEntryAccessException;
 import com.Aether.Journal.repository.JournalEntryRepository;
 import com.Aether.Journal.repository.UserRepository;
 import org.bson.types.ObjectId;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,10 +30,12 @@ public class JouralEntryService {
     private  UserRepository userRepository;
 
     @Transactional
-    public JournalEntryResponseDto createJournalEntry(JournalEntryRequestDto entryRequestDto,String username) {
+    public JournalEntryResponseDto createJournalEntry(JournalEntryRequestDto entryRequestDto) {
+
+        String username=SecurityContextHolder.getContext().getAuthentication().getName();
 
         User user=userRepository.findByUsername(username)
-                .orElseThrow();
+                .orElseThrow(()->new UsernameNotFoundException("User not found "));
 
         JournalEntry entry=new JournalEntry();
         entry.setTitle(entryRequestDto.getTitle());
@@ -38,7 +44,8 @@ public class JouralEntryService {
 
         entry=journalEntryRepository.save(entry);
 
-        user.setJournalEntries(List.of(entry));
+         user.getJournalEntries().add(entry);
+
         userRepository.save(user);
 
        JournalEntryResponseDto dto=new JournalEntryResponseDto();
@@ -51,33 +58,96 @@ public class JouralEntryService {
 
     }
 
-    public  List<JournalEntryResponseDto> getAllEntries() {
-        List<JournalEntry> entryList=journalEntryRepository.findAll();
+    public  List<JournalEntryResponseDto> getAllEntriesOfAnUser() {
+
+        String username=SecurityContextHolder.getContext().getAuthentication().getName();
+
+        User user=userRepository.findByUsername(username)
+                .orElseThrow(()->new UsernameNotFoundException("User not found"));
+
+        List<JournalEntry> entryList=user.getJournalEntries();
+         //TODO usename is going null need fixing
 
         return entryList.stream()
-                .map(entry->modelMapper.map(entry,JournalEntryResponseDto.class))
+                .map(entry -> {
+                    JournalEntryResponseDto dto =
+                            modelMapper.map(entry, JournalEntryResponseDto.class);
+                    dto.setUsername(username);
+                    return dto;
+                })
                 .toList();
     }
 
+
     public  JournalEntryResponseDto getEntryById(ObjectId id) {
-        JournalEntry journalEntry=journalEntryRepository.findById(id)
-                .orElseThrow(()->new RuntimeException("Entry is not found by id: "+id));
+        String username=SecurityContextHolder.getContext().getAuthentication().getName();
 
-        return modelMapper.map(journalEntry,JournalEntryResponseDto.class);
+        User user=userRepository.findByUsername(username)
+                .orElseThrow(()->new UsernameNotFoundException("User not found"));
+
+        if(!journalEntryRepository.existsById(id))
+             throw new GenericNotFoundException("Entry is not found or deleted");
+
+        JournalEntry entry = user.getJournalEntries().stream()
+                .filter(e -> e.getId().equals(id))
+                .findFirst()
+                .orElse(null);
+        if(entry==null)
+             throw new IllegalEntryAccessException("You cannot get others JournalEntry");
+
+        JournalEntryResponseDto dto= modelMapper.map(entry,JournalEntryResponseDto.class);
+        dto.setUsername(username);
+
+        return dto;
+
     }
 
+    @Transactional
     public  String deleteById(ObjectId id) {
-        if(journalEntryRepository.existsById(id)){
-            journalEntryRepository.deleteById(id);
-        }
-        //should throw excetion from here;
 
-        return "Entry deleted";
+        String username=SecurityContextHolder.getContext().getAuthentication().getName();
+
+        User user=userRepository.findByUsername(username)
+                .orElseThrow(()->new UsernameNotFoundException("User not found"));
+
+        if(!journalEntryRepository.existsById(id))
+            throw new GenericNotFoundException("Entry is not found or deleted");
+
+        JournalEntry entry = user.getJournalEntries().stream()
+                .filter(e -> e.getId().equals(id))
+                .findFirst()
+                .orElse(null);
+        if(entry==null)
+            throw new IllegalEntryAccessException("You cannot delete others JournalEntry");
+
+             journalEntryRepository.deleteById(id);
+
+
+            user.getJournalEntries().removeIf(ent->ent.getId().equals(id));
+            userRepository.save(user);
+
+        return "Entry deleted ";
     }
 
+    @Transactional
     public  JournalEntryResponseDto updateEntry(ObjectId id, JournalEntryRequestDto requestDto) {
-        JournalEntry journalEntry=journalEntryRepository.findById(id)
-                .orElseThrow(()->new RuntimeException("Not found"));
+
+        String username=SecurityContextHolder.getContext().getAuthentication().getName();
+
+        User user=userRepository.findByUsername(username)
+                .orElseThrow(()->new UsernameNotFoundException("User not found"));
+
+        if(!journalEntryRepository.existsById(id))
+            throw new GenericNotFoundException("Entry is not found or deleted");
+
+        JournalEntry journalEntry = user.getJournalEntries().stream()
+                .filter(e -> e.getId().equals(id))
+                .findFirst()
+                .orElse(null);
+
+        if(journalEntry==null)
+            throw new IllegalEntryAccessException("You cannot delete others JournalEntry");
+
         if(requestDto!=null && !requestDto.getTitle().isEmpty()){
             journalEntry.setTitle(requestDto.getTitle());
         }
@@ -85,8 +155,11 @@ public class JouralEntryService {
             journalEntry.setContent(requestDto.getContent());
         }
 
-        journalEntryRepository.save(journalEntry);
+        journalEntry= journalEntryRepository.save(journalEntry);
 
-            return modelMapper.map(journalEntry,JournalEntryResponseDto.class);
+
+        JournalEntryResponseDto dto= modelMapper.map(journalEntry,JournalEntryResponseDto.class);
+        dto.setUsername(user.getUsername());
+            return dto;
     }
 }

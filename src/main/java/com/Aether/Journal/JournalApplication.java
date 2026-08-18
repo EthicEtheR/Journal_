@@ -3,6 +3,7 @@ package com.Aether.Journal;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
+
 @SpringBootApplication
 public class JournalApplication {
 
@@ -10,4 +11,9 @@ public class JournalApplication {
 		SpringApplication.run(JournalApplication.class, args);
 	}
 
+
+
+//#mongoAltas:ak04238_db_user/TjKjHTXleFX8ztio
 }
+
+

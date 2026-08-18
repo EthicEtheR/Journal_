@@ -19,18 +19,18 @@ public class JournalEntryController {
     @Autowired
     private JouralEntryService jouralEntryService;
 
-    @PostMapping("/{username}")
+    @PostMapping()
     public ResponseEntity<JournalEntryResponseDto> createJournal(
-            @RequestBody JournalEntryRequestDto entryRequestDto,@PathVariable String username){
+            @RequestBody JournalEntryRequestDto entryRequestDto){
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(jouralEntryService.createJournalEntry(entryRequestDto,username));
+                .body(jouralEntryService.createJournalEntry(entryRequestDto));
 
 
     }
 
     @GetMapping
-    public ResponseEntity<List<JournalEntryResponseDto>> getAllEntries(){
-        return ResponseEntity.ok(jouralEntryService.getAllEntries());
+    public ResponseEntity<List<JournalEntryResponseDto>> getAllEntriesOfAnUser(){
+        return ResponseEntity.ok(jouralEntryService.getAllEntriesOfAnUser());
     }
 
     @GetMapping("/{id}")
@@ -45,8 +45,8 @@ public class JournalEntryController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<JournalEntryResponseDto> updateEntry(
-            @PathVariable ObjectId id,@RequestBody JournalEntryRequestDto requestDto){
+    public ResponseEntity<JournalEntryResponseDto> updateEntry(@PathVariable ObjectId id,
+                                                               @RequestBody JournalEntryRequestDto requestDto){
         return ResponseEntity.ok(jouralEntryService.updateEntry(id,requestDto));
     }
 
