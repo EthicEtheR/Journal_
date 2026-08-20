@@ -11,16 +11,11 @@ import lombok.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.List;
 import java.util.Objects;
@@ -37,28 +32,28 @@ public class UserService {
 
     public UserResponseDto createUser(UserRequestDto requestDto) {
 
-       User exists=userRepository.findByUsername(requestDto.getUsername())
-               .orElse(null);
+        User exists=userRepository.findByUsername(requestDto.getUsername())
+                .orElse(null);
 
         User user=new User();
 
-       if(exists==null) {
+        if(exists==null) {
 
-           user.setUsername(requestDto.getUsername());
-           if(!requestDto.getPassword().isEmpty())
-               user.setPassword(encoder.encode(requestDto.getPassword()));
-           else throw  new EmptyCredentialsException("Empty Credentials is not allowed");
-           user.setRoles(Set.of(RoleType.USER));
+            user.setUsername(requestDto.getUsername());
+            if(!requestDto.getPassword().isEmpty())
+                user.setPassword(encoder.encode(requestDto.getPassword()));
+            else throw  new EmptyCredentialsException("Empty Credentials is not allowed");
+            user.setRoles(Set.of(RoleType.USER));
 
-           user = userRepository.save(user);
-       }
-       else{
-           throw new UserAlreadyExists("User already exists,Please use its credentials for login");
-       }
+            user = userRepository.save(user);
+        }
+        else{
+            throw new UserAlreadyExists("User already exists,Please use its credentials for login");
+        }
 
 
 
-      return modelMapper.map(user,UserResponseDto.class);
+        return modelMapper.map(user,UserResponseDto.class);
 
     }
 
@@ -113,5 +108,13 @@ public class UserService {
             }
 
         throw new EmptyCredentialsException("username or password or both is empty");
+    }
+
+    public @Nullable List<UserResponseDto> getAllUsers() {
+        List<User> userList=userRepository.findAll();
+
+        return userList.stream()
+                .map(user->modelMapper.map(user,UserResponseDto.class))
+                .toList();
     }
 }

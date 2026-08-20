@@ -2,8 +2,7 @@ package com.Aether.Journal.controller;
 
 import com.Aether.Journal.dto.JournalEntryRequestDto;
 import com.Aether.Journal.dto.JournalEntryResponseDto;
-import com.Aether.Journal.entity.JournalEntry;
-import com.Aether.Journal.service.JouralEntryService;
+import com.Aether.Journal.service.JournalEntryService;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -17,37 +16,37 @@ import java.util.List;
 public class JournalEntryController {
 
     @Autowired
-    private JouralEntryService jouralEntryService;
+    private JournalEntryService journalEntryService;
 
     @PostMapping()
     public ResponseEntity<JournalEntryResponseDto> createJournal(
             @RequestBody JournalEntryRequestDto entryRequestDto){
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(jouralEntryService.createJournalEntry(entryRequestDto));
+                .body(journalEntryService.createJournalEntry(entryRequestDto));
 
 
     }
 
     @GetMapping
     public ResponseEntity<List<JournalEntryResponseDto>> getAllEntriesOfAnUser(){
-        return ResponseEntity.ok(jouralEntryService.getAllEntriesOfAnUser());
+        return ResponseEntity.ok(journalEntryService.getAllEntriesOfAnUser());
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<JournalEntryResponseDto> getById(@PathVariable ObjectId id){
-        return ResponseEntity.ok(jouralEntryService.getEntryById(id));
+        return ResponseEntity.ok(journalEntryService.getEntryById(id));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteBYId(@PathVariable ObjectId id){
         return ResponseEntity.status(HttpStatus.NO_CONTENT)
-                .body(jouralEntryService.deleteById(id));
+                .body(journalEntryService.deleteById(id));
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<JournalEntryResponseDto> updateEntry(@PathVariable ObjectId id,
                                                                @RequestBody JournalEntryRequestDto requestDto){
-        return ResponseEntity.ok(jouralEntryService.updateEntry(id,requestDto));
+        return ResponseEntity.ok(journalEntryService.updateEntry(id,requestDto));
     }
 
 

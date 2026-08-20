@@ -9,6 +9,7 @@ import com.Aether.Journal.exception.IllegalEntryAccessException;
 import com.Aether.Journal.repository.JournalEntryRepository;
 import com.Aether.Journal.repository.UserRepository;
 import org.bson.types.ObjectId;
+import org.jspecify.annotations.Nullable;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -20,7 +21,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
-public class JouralEntryService {
+public class JournalEntryService {
 
     @Autowired
     private JournalEntryRepository journalEntryRepository;
@@ -161,5 +162,12 @@ public class JouralEntryService {
         JournalEntryResponseDto dto= modelMapper.map(journalEntry,JournalEntryResponseDto.class);
         dto.setUsername(user.getUsername());
             return dto;
+    }
+
+    public @Nullable List<JournalEntryResponseDto> getAllEntries() {
+        List<JournalEntry> journalEntries=journalEntryRepository.findAll();
+        return journalEntries.stream()
+                .map(entry->modelMapper.map(entry,JournalEntryResponseDto.class))
+                .toList();
     }
 }
